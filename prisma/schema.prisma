@@ -1,0 +1,299 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRES_PRISMA_URL")
+}
+
+model grade {
+  id           Int            @id(map: "grade_pk") @default(autoincrement())
+  name         String         @db.VarChar
+  projectgrade projectgrade[]
+}
+
+model guest {
+  id         Int      @id
+  expires_at DateTime @db.Date
+  user       user     @relation(fields: [id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model historicproject {
+  id                       Int                      @id @default(autoincrement())
+  name                     String                   @db.VarChar(50)
+  description              String                   @db.VarChar(255)
+  year                     Int
+  laboratory_id            Int
+  historicprojecttype_id   Int
+  historicprojectstatus_id Int
+  historicprojectstatus    historicprojectstatus    @relation(fields: [historicprojectstatus_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  historicprojecttype      historicprojecttype      @relation(fields: [historicprojecttype_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  laboratory               laboratory               @relation(fields: [laboratory_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  historicprojectscholar   historicprojectscholar[]
+}
+
+model historicprojectscholar {
+  historicproject_id Int
+  historicscholar_id Int
+  historicproject    historicproject @relation(fields: [historicproject_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  historicscholar    historicscholar @relation(fields: [historicscholar_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([historicproject_id, historicscholar_id])
+}
+
+model historicprojectstatus {
+  id              Int               @id @default(autoincrement())
+  name            String            @db.VarChar(50)
+  historicproject historicproject[]
+}
+
+model historicprojecttype {
+  id              Int               @id @default(autoincrement())
+  name            String            @db.VarChar(50)
+  historicproject historicproject[]
+}
+
+model historicscholar {
+  id                         Int                      @id @default(autoincrement())
+  name                       String                   @db.VarChar(50)
+  dni                        String?                  @db.VarChar(25)
+  file                       String?                  @db.VarChar(25)
+  phone                      String?                  @db.VarChar(25)
+  careerlevel                Int?
+  historicusercareer_id      Int
+  historicscholarshiptype_id Int
+  email                      String?                  @db.VarChar(255)
+  historicprojectscholar     historicprojectscholar[]
+  historicscholarshiptype    historicscholarshiptype  @relation(fields: [historicscholarshiptype_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  historicusercareer         historicusercareer       @relation(fields: [historicusercareer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model historicscholarshiptype {
+  id              Int               @id @default(autoincrement())
+  name            String            @db.VarChar(50)
+  historicscholar historicscholar[]
+}
+
+model historicusercareer {
+  id              Int               @id @default(autoincrement())
+  name            String            @db.VarChar(50)
+  historicscholar historicscholar[]
+}
+
+model laboratory {
+  id              Int               @id(map: "lab_pk") @default(autoincrement())
+  name            String            @db.VarChar
+  historicproject historicproject[]
+  project         project[]
+  supply          supply[]
+  user            user[]
+}
+
+model message {
+  id                             Int      @id @default(autoincrement())
+  content                        String   @db.VarChar(255)
+  sender_id                      Int?
+  receiver_id                    Int?
+  timestamp                      DateTime @db.Timestamp(6)
+  is_read                        Boolean? @default(false)
+  user_message_receiver_idTouser user?    @relation("message_receiver_idTouser", fields: [receiver_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user_message_sender_idTouser   user?    @relation("message_sender_idTouser", fields: [sender_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([receiver_id], map: "idx_receiver_id")
+  @@index([sender_id], map: "idx_sender_id")
+}
+
+model observation {
+  id               Int                @id @default(autoincrement())
+  content          String             @db.VarChar(255)
+  task_id          Int?
+  project_id       Int
+  created_at       DateTime           @default(now()) @db.Timestamp(6)
+  author_id        Int?
+  user             user?              @relation(fields: [author_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  project          project            @relation(fields: [project_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  task             task?              @relation(fields: [task_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  observation_read observation_read[]
+}
+
+model observation_read {
+  id             Int         @id @default(autoincrement())
+  observation_id Int
+  scholar_id     Int
+  is_read        Boolean?    @default(false)
+  observation    observation @relation(fields: [observation_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  scholar        scholar     @relation(fields: [scholar_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model project {
+  id               Int              @id @default(autoincrement())
+  name             String           @db.VarChar(50)
+  description      String           @db.VarChar(255)
+  created_at       DateTime         @default(now()) @db.Timestamp(6)
+  modified_at      DateTime?        @db.Timestamp(6)
+  finished_at      DateTime?        @db.Timestamp(6)
+  laboratory_id    Int
+  projecttype_id   Int
+  projectstatus_id Int
+  grade_id         Int?
+  observation      observation[]
+  laboratory       laboratory       @relation(fields: [laboratory_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  projectstatus    projectstatus    @relation(fields: [projectstatus_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  projecttype      projecttype      @relation(fields: [projecttype_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  projectgrade     projectgrade[]
+  projectscholar   projectscholar[]
+  task             task[]
+}
+
+model projectgrade {
+  date       DateTime @default(dbgenerated("CURRENT_DATE")) @db.Date
+  grade_id   Int
+  project_id Int
+  id         Int      @id @default(autoincrement())
+  grade      grade    @relation(fields: [grade_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  project    project  @relation(fields: [project_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model projectscholar {
+  project_id Int
+  scholar_id Int
+  project    project @relation(fields: [project_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  scholar    scholar @relation(fields: [scholar_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([project_id, scholar_id])
+}
+
+model projectstatus {
+  id      Int       @id(map: "projectstatus_pk") @default(autoincrement())
+  name    String    @db.VarChar
+  project project[]
+}
+
+model projecttype {
+  id      Int       @id(map: "projecttype_pk") @default(autoincrement())
+  name    String    @db.VarChar
+  project project[]
+}
+
+model recoverytoken {
+  email      String   @id @db.VarChar(100)
+  token      String   @db.VarChar(255)
+  expires_at DateTime @db.Date
+  user       user     @relation(fields: [email], references: [email], onDelete: NoAction, onUpdate: NoAction, map: "verificationtoken_email_fkey")
+}
+
+model scholar {
+  id                 Int                @id
+  file               String             @unique @db.VarChar(25)
+  phone              String?            @db.VarChar(25)
+  address            String?            @db.VarChar(100)
+  careerlevel        Int?
+  usercareer_id      Int
+  scholarshiptype_id Int
+  dni                String             @unique @db.VarChar(25)
+  observation_read   observation_read[]
+  projectscholar     projectscholar[]
+  user               user               @relation(fields: [id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  scholarshiptype    scholarshiptype    @relation(fields: [scholarshiptype_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  usercareer         usercareer         @relation(fields: [usercareer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model scholarshiptype {
+  id      Int       @id(map: "scholarchiptype_pk") @default(autoincrement())
+  name    String    @db.VarChar
+  scholar scholar[]
+}
+
+model supply {
+  id              Int           @id @default(autoincrement())
+  description     String        @db.VarChar(255)
+  laboratory_id   Int?
+  supplystatus_id Int?
+  supplytype_id   Int?
+  name            String?       @db.VarChar(50)
+  year            Int?
+  laboratory      laboratory?   @relation(fields: [laboratory_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  supplystatus    supplystatus? @relation(fields: [supplystatus_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  supplytype      supplytype?   @relation(fields: [supplytype_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model supplystatus {
+  id     Int      @id(map: "supplystatus_pk") @default(autoincrement())
+  name   String   @db.VarChar
+  supply supply[]
+}
+
+model supplytype {
+  id     Int      @id(map: "supplytype_pk") @default(autoincrement())
+  name   String   @db.VarChar
+  supply supply[]
+}
+
+model task {
+  id            Int           @id @default(autoincrement())
+  description   String        @db.VarChar(255)
+  created_at    DateTime      @default(now()) @db.Timestamp(6)
+  project_id    Int
+  taskstatus_id Int?
+  name          String?       @db.VarChar(50)
+  start_date    DateTime?     @db.Timestamp(6)
+  end_date      DateTime?     @db.Timestamp(6)
+  observation   observation[]
+  project       project       @relation(fields: [project_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  taskstatus    taskstatus?   @relation(fields: [taskstatus_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model taskstatus {
+  id   Int    @id @default(autoincrement())
+  name String @db.VarChar
+  task task[]
+}
+
+model user {
+  id                                Int                @id @default(autoincrement())
+  name                              String             @db.VarChar(50)
+  email                             String             @unique @db.VarChar(255)
+  password                          String             @db.VarChar(255)
+  usertype_id                       Int
+  userstatus_id                     Int
+  laboratory_id                     Int?
+  emailverified                     DateTime?          @db.Timestamp(6)
+  created_at                        DateTime           @default(now()) @db.Timestamp(6)
+  dropped_at                        DateTime?          @db.Timestamp(6)
+  guest                             guest?
+  message_message_receiver_idTouser message[]          @relation("message_receiver_idTouser")
+  message_message_sender_idTouser   message[]          @relation("message_sender_idTouser")
+  observation                       observation[]
+  recoverytoken                     recoverytoken?
+  scholar                           scholar?
+  laboratory                        laboratory?        @relation(fields: [laboratory_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  userstatus                        userstatus         @relation(fields: [userstatus_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  usertype                          usertype           @relation(fields: [usertype_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  verificationtoken                 verificationtoken?
+}
+
+model usercareer {
+  id      Int       @id(map: "usercareer_pk") @default(autoincrement())
+  name    String    @db.VarChar
+  scholar scholar[]
+}
+
+model userstatus {
+  id   Int    @id(map: "userstatus_pk") @default(autoincrement())
+  name String @db.VarChar
+  user user[]
+}
+
+model usertype {
+  id   Int    @id(map: "usertype_pk") @default(autoincrement())
+  name String @db.VarChar
+  user user[]
+}
+
+model verificationtoken {
+  email      String   @id @db.VarChar(100)
+  token      String   @db.VarChar(255)
+  expires_at DateTime @db.Date
+  user       user     @relation(fields: [email], references: [email], onDelete: NoAction, onUpdate: NoAction)
+}

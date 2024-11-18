@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.custom-scrollbar {
+  scrollbar-width: thin; /* Ancho del scroll en Firefox */
+  scrollbar-color: #f97316 transparent; /* Color del scroll y del fondo en Firefox */
+}
+
+/* Estilos para la barra de desplazamiento en navegadores basados en WebKit (Chrome, Safari, Edge) */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px; /* Ancho del scroll */
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent; /* Color del fondo del track del scroll */
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #f97316; /* Color de la barra de desplazamiento */
+  border-radius: 20px; /* Bordes redondeados */
+  border: 2px solid transparent; /* Añade un borde para crear separación */
+}
